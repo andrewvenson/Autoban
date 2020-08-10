@@ -79,6 +79,15 @@ body {
     box-shadow: 0 0 0 2px rgba(218, 214, 214, 0.342) inset !important;
 }
 
+.ui.dropdown.dropdown .menu>.input {
+    width: auto;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    margin: .24285714rem .28571429rem;
+    min-width: 10rem;
+}
+
 /* .ui.basic.inverted.button:hover,
 .ui.basic.inverted.buttons .button:hover {
   color: #fff !important;
@@ -232,7 +241,7 @@ label {
 }
 
 .card-container {
-    padding: 8px 6px;
+    padding: 6px 6px;
     max-height: 80vh;
     overflow-y: scroll;
 }
@@ -272,7 +281,7 @@ label {
 .card {
     width: 100%;
     border-radius: 15px;
-    margin: 6px 0;
+    margin: 8px 0;
 }
 
 .card-body {
@@ -280,7 +289,7 @@ label {
 }
 
 .card-text {
-    min-height: 30px;
+    min-height: 35px;
     white-space: pre-wrap;
 }
 

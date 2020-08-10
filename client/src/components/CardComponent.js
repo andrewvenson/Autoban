@@ -23,10 +23,12 @@ import { AutoContext } from '../AutoContext';
 function CardComponent(props) {
   const context = useContext(AutoContext);
   const target = useRef(null);
+  const drop = useRef(null);
   const [menu, setMenu] = useState({
     offsetTop: 0,
     offsetLeft: 0,
     addLabel: '',
+    bottomOffset: 0,
   });
   const [labels, setLabels] = useState([]);
   const [availLabels, setAvailLabels] = useState([]);
@@ -37,30 +39,28 @@ function CardComponent(props) {
     // get task label ids
     // axios.get(`/api/task/?task_id=${props.id}`).then((res) => {
     // });
-      const foundIndex = context[6].findIndex(task => task.id_task === props.id);
-      const task = context[6][foundIndex];
-      let cardLabels = [
-        task.id_label1,
-        task.id_label2,
-        task.id_label3,
-      ];
-      const taskLabels = [];
-      // create a copy of project labels from context and find matching ids from task
-      const projLabels = Array.from(context[12].projectLabels);
-      cardLabels.forEach((label) => {
-        if (label !== null) {
-          let foundIndex = projLabels.findIndex(
-            (item) => item.id_label === label,
-          );
-          const newLabel = projLabels[foundIndex];
-          if (newLabel) {
-            taskLabels.push(newLabel);
-            projLabels.splice(foundIndex, 1);
-          }
+    const foundIndex = context[6].findIndex(
+      (task) => task.id_task === props.id,
+    );
+    const task = context[6][foundIndex];
+    let cardLabels = [task.id_label1, task.id_label2, task.id_label3];
+    const taskLabels = [];
+    // create a copy of project labels from context and find matching ids from task
+    const projLabels = Array.from(context[12].projectLabels);
+    cardLabels.forEach((label) => {
+      if (label !== null) {
+        let foundIndex = projLabels.findIndex(
+          (item) => item.id_label === label,
+        );
+        const newLabel = projLabels[foundIndex];
+        if (newLabel) {
+          taskLabels.push(newLabel);
+          projLabels.splice(foundIndex, 1);
         }
-      });
-      setLabels(taskLabels);
-      setAvailLabels(projLabels);
+      }
+    });
+    setLabels(taskLabels);
+    setAvailLabels(projLabels);
   }, [context[12].projectLabels, context[6]]);
 
   // move added card label to available state and remove from it's label state
@@ -133,6 +133,40 @@ function CardComponent(props) {
     setAvailLabels(availCopy);
   };
 
+  const getWindowDimensions = () => {
+    const { innerWidth: width, innerHeight: height } = window;
+    return {
+      width,
+      height,
+    };
+  };
+  const [windowDimensions, setWindowDimensions] = useState(
+    getWindowDimensions,
+  );
+  useEffect(() => {
+    function handleResize() {
+      setWindowDimensions(getWindowDimensions);
+    }
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    // console.log(menu.offsetTop, menu.offsetLeft);
+    const targ = ReactDOM.findDOMNode(target.current);
+    // console.log(
+    //   windowDimensions.height - (targ.offsetHeight + menu.offsetTop),
+    // );
+    console.log(windowDimensions)
+    // setMenu({
+    //   ...menu,
+    //   bottomOffset:
+    //     windowDimensions -
+    //     (targ.offsetHeight + menu.offsetTop),
+    // });
+    // console.log(windowDimensions.height);
+  }, [menu]);
+
   // update modal context when selecting to create a label from dropdown
   const handleCreateLabel = () => {
     context[5]({
@@ -156,7 +190,9 @@ function CardComponent(props) {
           {props.title}
           <DropMenu option="card" id={props.id} />
         </Card.Title>
-        <Card.Text><ReactMarkdown source={props.description}/></Card.Text>
+        <Card.Text>
+          <ReactMarkdown source={props.description} />
+        </Card.Text>
       </Card.Body>
       <Card.Footer
         className="flex-row card-footer"
@@ -187,9 +223,10 @@ function CardComponent(props) {
         {/* only allow 3 labels by rendering add button when task label array length is less than 3*/}
         {labels.length < 3 && (
           <Dropdown
+            upward={menu.bottomOffset < 160}
+            pointing="top left"
             compact
             ref={target}
-            pointing="top left"
             trigger={
               <Label
                 size="mini"
@@ -213,17 +250,24 @@ function CardComponent(props) {
               // allows us to position the dropdown exactly where we want
               const targ = ReactDOM.findDOMNode(target.current);
               setMenu({
+                ...menu,
                 offsetTop:
                   targ.parentElement.offsetTop +
-                  targ.parentElement.parentElement.offsetTop +
-                  80,
+                  targ.parentElement.parentElement.offsetTop,
                 offsetLeft:
                   targ.offsetLeft +
                   targ.parentElement.parentElement.offsetLeft,
+                bottomOffset:
+                  windowDimensions.height -
+                  (targ.offsetHeight +
+                    targ.parentElement.offsetTop +
+                    targ.parentElement.parentElement.offsetTop),
               });
+              console.log(menu)
             }}
           >
             <Dropdown.Menu
+              ref={drop}
               style={{
                 position: 'fixed',
                 top: menu.offsetTop,
@@ -265,7 +309,7 @@ function CardComponent(props) {
                 }
               />
               <Dropdown.Divider />
-              <Dropdown.Menu scrolling>
+              <Dropdown.Menu scrolling style={{maxHeight: '110px'}}>
                 {/* if input has more than 1 character, show the add label item */}
                 {menu.addLabel && menu.addLabel.length > 1 && (
                   <>
